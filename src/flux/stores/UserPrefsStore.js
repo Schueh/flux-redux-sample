@@ -1,4 +1,4 @@
-import { Store } from '.';
+import { Store } from './Store';
 
 export class UserPrefsStore extends Store {
     getInitialState() {
