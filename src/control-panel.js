@@ -1,31 +1,19 @@
-import { Dispatcher, UserPrefsStore } from './flux';
+import { ControlPanelActions, Dispatcher, UserPrefsStore } from './flux';
 
 const controlPanelDispatcher = new Dispatcher();
 
-const userNameUpdateAction = (name) => {
-    return {
-        type: 'UPDATE_USERNAME',
-        value: name
-    };
-};
-
-const fontSizeUpdateAction = (size) => {
-    return {
-        type: 'UPDATE_FONT_SIZE',
-        value: size
-    };
-};
+const controlPanelActions = new ControlPanelActions(controlPanelDispatcher);
 
 document.getElementById('userNameInput').addEventListener('input', ({target}) => {
     const name = target.value;
     console.log('Dispatching...', name);
-    controlPanelDispatcher.dispatch(userNameUpdateAction(name));
+    controlPanelActions.updateUserName(name);
 });
 
 document.forms.fontSizeForm.fontSize.forEach(element => {
     element.addEventListener('change', ({target}) => {
         const size = target.value;
-        controlPanelDispatcher.dispatch(fontSizeUpdateAction(size));
+        controlPanelActions.updateFontSize(size);
     });
 });
 

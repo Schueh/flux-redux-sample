@@ -1,28 +1,8 @@
-import { Dispatcher, TasksStore } from './flux';
+import { Dispatcher, TasksStore, TasksActions } from './flux';
 
 const tasksDispatcher = new Dispatcher();
 
-const createNewTaskAction = (content) => {
-    return {
-        type: 'CREATE_TASK',
-        value: content
-    };
-};
-
-const showTasksAction = (show) => {
-    return {
-        type: 'SHOW_TASKS',
-        value: show
-    };
-};
-
-const completeTaskAction = (id, isComplete) => {
-    return {
-        type: 'COMPLETE_TASK',
-        id,
-        value: isComplete
-    };
-};
+const tasksActions = new TasksActions(tasksDispatcher);
 
 const TaskComponent = ({content, complete, id}) => (
     `<section>
@@ -48,7 +28,7 @@ const render = () => {
         element.addEventListener('change', (e) => {
             const id = e.target.attributes['data-taskid'].value;
             const checked = e.target.checked;
-            tasksDispatcher.dispatch(completeTaskAction(id, checked));
+            tasksActions.completeTask(id, checked);
         });
     });
 };
@@ -57,14 +37,14 @@ document.forms.newTask.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = e.target.newTaskName.value;
     if (name) {
-        tasksDispatcher.dispatch(createNewTaskAction(name));
+        tasksActions.createNewTask(name);
         e.target.newTaskName.value = null;
     }
 });
 
 document.getElementById('showComplete').addEventListener('change', ({target}) => {
     const showComplete = target.checked;
-    tasksDispatcher.dispatch(showTasksAction(showComplete));
+    tasksActions.showTasks(showComplete);
 });
 
 const tasksStore = new TasksStore(tasksDispatcher);
