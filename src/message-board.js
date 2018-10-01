@@ -1,4 +1,6 @@
-import { createStore, combineReducers } from 'redux';
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { get } from './http';
+import logger from 'redux-logger';
 
 const defaultState = {
     messages: [
@@ -13,7 +15,19 @@ const defaultState = {
             content: 'I love Flux'
         }
     ],
-    userStatus: 'ONLINE'
+    userStatus: 'ONLINE',
+    apiCommunicationStatus: 'READY'
+}
+
+const apiCommunicationStatusReducer = (state = defaultState.apiCommunicationStatus, {type}) => {
+    switch (type) {
+        case 'CREATE_NEW_MESSAGE':
+            return 'WAITING';
+        case 'NEW_MESSAGE_SERVER_ACCEPTED':
+            return 'READY';
+    }
+
+    return state;
 }
 
 const userStatusReducer = (state = defaultState.userStatus, {type, value}) => {
@@ -38,10 +52,11 @@ const messagesReducer = (state = defaultState.messages, {type, value, postedBy, 
 
 const combinedReducer = combineReducers({
     userStatus: userStatusReducer,
-    messages: messagesReducer
+    messages: messagesReducer,
+    apiCommunicationStatus: apiCommunicationStatusReducer
 });
 
-const store = createStore(combinedReducer);
+const store = createStore(combinedReducer, applyMiddleware(logger));
 
 document.forms.newMessage.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -51,7 +66,7 @@ document.forms.newMessage.addEventListener('submit', (e) => {
 });
 
 const render = () => {
-    const { messages, userStatus } = store.getState();
+    const { messages, userStatus, apiCommunicationStatus } = store.getState();
     const messagesHtml = messages
         .sort((a, b) => b.date - a.date)
         .map(message => (`
@@ -61,7 +76,7 @@ const render = () => {
         `)).join('');
     document.getElementById('messages').innerHTML = messagesHtml;
 
-    document.forms.newMessage.fields.disabled = (userStatus === 'OFFLINE');
+    document.forms.newMessage.fields.disabled = (userStatus === 'OFFLINE' || apiCommunicationStatus === 'WAITING');
     document.forms.newMessage.newMessage.value = '';
 }
 
@@ -74,6 +89,17 @@ const statusUpdateAction = (value) => {
 
 const newMessageAction = (content, postedBy) => {
     const date = new Date();
+
+    get('/api/create', (id) => {
+        store.dispatch({
+            type: 'NEW_MESSAGE_SERVER_ACCEPTED',
+            value: content,
+            postedBy,
+            date,
+            id
+        });
+    });
+
     return {
         type: 'CREATE_NEW_MESSAGE',
         value: content,
